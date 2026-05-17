@@ -77,18 +77,17 @@
         <label style="color: black; display: inline;">Simular Usuario:</label>
         <select id="selector-vendedor" onchange="cambiarUsuarioSimulado()">
             <option value="admin">Carlos (Dueño) - ADMIN</option>
-            <option value="vendedor">Vendedor 1 (Vendedor)</option>
-            <option value="vendedor">luis calvo (Vendedor)</option>
-            <option value="vendedor">luisa Suárez (Vendedor)</option>
+            <option value="v1">Vendedor 1 (Vendedor)</option>
+            <option value="v2">luis calvo (Vendedor)</option>
+            <option value="v3">luisa Suárez (Vendedor)</option>
         </select>
-        <button onclick="cerrarSesion()">Salir</button>
+        <button onclick="reiniciarTodo()">Reset Datos</button>
     </div>
 
     <hr>
 
     <div id="seccion-administrador">
         <h2>Panel de Control (Dueño)</h2>
-        
         <h3>Porcentaje de Ganancias por Trabajador</h3>
         <table>
             <thead>
@@ -99,30 +98,11 @@
                     <th>Ganancia Acumulada</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td><b>Vendedor 1</b></td>
-                    <td>$0.00</td>
-                    <td>10%</td>
-                    <td class="ganancia-verde">$0.00</td>
-                </tr>
-                <tr>
-                    <td><b>luis calvo</b></td>
-                    <td>$0.00</td>
-                    <td>5%</td>
-                    <td class="ganancia-verde">$0.00</td>
-                </tr>
-                <tr>
-                    <td><b>luisa Suárez</b></td>
-                    <td>$0.00</td>
-                    <td>8%</td>
-                    <td class="ganancia-verde">$0.00</td>
-                </tr>
-            </tbody>
+            <tbody id="tabla-comisiones">
+                </tbody>
         </table>
 
         <h3>Lista de Trabajadores</h3>
-        <button onclick="agregarTrabajador()">+ Agregar Trabajador</button>
         <ul>
             <li>Vendedor 1 - (10% Comisión)</li>
             <li>luis calvo - (5% Comisión)</li>
@@ -130,6 +110,7 @@
         </ul>
         <hr>
     </div>
+
     <h2>Registrar Nueva Venta</h2>
     <form onsubmit="event.preventDefault(); guardarVenta();">
         <input type="text" id="nombre-cliente" placeholder="Nombre del Cliente">
@@ -140,8 +121,7 @@
         <button type="submit">Guardar Venta</button>
     </form>
 
-
-    <h2>Control de Clientes y Deudores</h2>
+    <h2 id="titulo-tabla-clientes">Control de Clientes y Deudores</h2>
     <table id="tabla-clientes">
         <thead>
             <tr>
@@ -152,108 +132,192 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>
-                    Carlos Lopez
-                    <span class="vendedor-subtexto">Vendido por: Carlos (Dueño) - ADMIN</span>
-                </td>
-                <td class="estado-pagado">Pagado</td>
-                <td>$0.00</td>
-                <td>Ninguna</td>
-            </tr>
-            <tr>
-                <td>
-                    Ruiz de la hermosa
-                    <span class="vendedor-subtexto">Vendido por: Carlos (Dueño) - ADMIN</span>
-                </td>
-                <td class="estado-pagado">Pagado</td>
-                <td>$0.00</td>
-                <td>Ninguna</td>
-            </tr>
-        </tbody>
+            </tbody>
     </table>
 
-
     <script>
-        // Ocultar o mostrar el panel del dueño
+        // Base de datos inicial simulada
+        const datosIniciales = {
+            ventas: [
+                { id: 1, cliente: "Carlos Lopez", monto: 100, vendedorId: "admin", vendedorNom: "Carlos (Dueño)", credito: false, pagado: true },
+                { id: 2, cliente: "Ruiz de la hermosa", monto: 150, vendedorId: "admin", vendedorNom: "Carlos (Dueño)", credito: false, pagado: true }
+            ],
+            comisiones: {
+                "v1": { nombre: "Vendedor 1", porcentaje: 0.10, totalVendido: 0, ganancia: 0 },
+                "v2": { nombre: "luis calvo", porcentaje: 0.05, totalVendido: 0, ganancia: 0 },
+                "v3": { nombre: "luisa Suárez", porcentaje: 0.08, totalVendido: 0, ganancia: 0 }
+            }
+        };
+
+        // Cargar datos existentes o usar los iniciales
+        let BD = JSON.parse(localStorage.getItem("sistema_ventas_bd")) || datosIniciales;
+
+        function guardarEnAlmacen() {
+            localStorage.setItem("sistema_ventas_bd", JSON.stringify(BD));
+        }
+
+        // Al cargar la página por primera vez
+        document.addEventListener("DOMContentLoaded", () => {
+            calcularGanancias();
+            actualizarPantalla();
+        });
+
         function cambiarUsuarioSimulado() {
             const selector = document.getElementById("selector-vendedor");
             const seccionAdmin = document.getElementById("seccion-administrador");
             
+            // Ocultar o mostrar panel de administrador
             if (selector.value !== "admin") {
                 seccionAdmin.style.display = "none";
             } else {
                 seccionAdmin.style.display = "block";
             }
+            
+            // FILTRAR CLIENTES: Volver a pintar la tabla según el usuario elegido
+            actualizarPantalla();
         }
 
-        // Registrar la venta de verdad en la tabla
+        function calcularGanancias() {
+            // Reiniciar contadores antes de sumar
+            for (let v in BD.comisiones) {
+                BD.comisiones[v].totalVendido = 0;
+                BD.comisiones[v].ganancia = 0;
+            }
+
+            // Sumar cada venta al vendedor correspondiente
+            BD.ventas.forEach(venta => {
+                if (BD.comisiones[venta.vendedorId]) {
+                    BD.comisiones[venta.vendedorId].totalVendido += venta.monto;
+                    // La ganancia se calcula multiplicando el monto por su porcentaje
+                    BD.comisiones[venta.vendedorId].ganancia = 
+                        BD.comisiones[venta.vendedorId].totalVendido * BD.comisiones[venta.vendedorId].porcentaje;
+                }
+            });
+        }
+
+        function actualizarPantalla() {
+            const selector = document.getElementById("selector-vendedor");
+            const usuarioActualId = selector.value;
+            const usuarioActualTexto = selector.options[selector.selectedIndex].text;
+
+            // 1. Renderizar Tabla de Comisiones (Panel Dueño)
+            const tbodyComisiones = document.getElementById("tabla-comisiones");
+            tbodyComisiones.innerHTML = "";
+            for (let key in BD.comisiones) {
+                const v = BD.comisiones[key];
+                tbodyComisiones.innerHTML += `
+                    <tr>
+                        <td><b>${v.nombre}</b></td>
+                        <td>$${v.totalVendido.toFixed(2)}</td>
+                        <td>${v.porcentaje * 100}%</td>
+                        <td class="ganancia-verde">$${v.ganancia.toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+
+            // 2. Renderizar Tabla de Clientes FILTRADA
+            const tbodyClientes = document.querySelector("#tabla-clientes tbody");
+            tbodyClientes.innerHTML = "";
+            
+            const tituloTabla = document.getElementById("titulo-tabla-clientes");
+            if (usuarioActualId === "admin") {
+                tituloTabla.textContent = "Control de Clientes y Deudores (Viendo Todo)";
+            } else {
+                tituloTabla.textContent = `Clientes de ${usuarioActualTexto}`;
+            }
+
+            BD.ventas.forEach(venta => {
+                // CONDICIÓN MÁGICA: Si eres admin ves todo, si eres vendedor solo ves tus ventas
+                if (usuarioActualId === "admin" || venta.vendedorId === usuarioActualId) {
+                    let estado = venta.pagado ? "Pagado" : "Pendiente";
+                    let clase = venta.pagado ? "estado-pagado" : "estado-pendiente";
+                    let deuda = venta.pagado ? "$0.00" : `$${venta.monto.toFixed(2)}`;
+                    let accion = venta.pagado ? "Ninguna" : `<button onclick="pagarCredito(${venta.id})">Pagar</button>`;
+
+                    tbodyClientes.innerHTML += `
+                        <tr>
+                            <td>
+                                ${venta.cliente}
+                                <span class="vendedor-subtexto">Vendido por: ${venta.vendedorNom}</span>
+                            </td>
+                            <td class="${clase}">${estado}</td>
+                            <td>${deuda}</td>
+                            <td>${accion}</td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+
         function guardarVenta() {
             const inputCliente = document.getElementById("nombre-cliente");
             const inputMonto = document.getElementById("monto-total");
             const checkCredito = document.getElementById("es-credito");
-            const selectorVendedor = document.getElementById("selector-vendedor");
+            const selector = document.getElementById("selector-vendedor");
 
-            if (inputCliente.value.trim() === "" || inputMonto.value.trim() === "") {
-                alert("Por favor, completa el nombre del cliente y el monto.");
+            const monto = parseFloat(inputMonto.value);
+
+            if (inputCliente.value.trim() === "" || isNaN(monto) || monto <= 0) {
+                alert("Por favor, introduce un nombre válido y un monto mayor a 0.");
                 return;
             }
 
-            const vendedorActual = selectorVendedor.options[selectorVendedor.selectedIndex].text;
+            // Creamos el nuevo objeto de la venta con los datos del simulador
+            const nuevaVenta = {
+                id: Date.now(), // ID único basado en tiempo
+                cliente: inputCliente.value.trim(),
+                monto: monto,
+                vendedorId: selector.value,
+                vendedorNom: selector.options[selector.selectedIndex].text,
+                credito: checkCredito.checked,
+                pagado: !checkCredito.checked
+            };
 
-            let estado = "Pagado";
-            let deuda = "$0.00";
-            let claseEstado = "estado-pagado";
-            let botonAccion = "Ninguna";
+            // Lo metemos al arreglo global
+            BD.ventas.push(nuevaVenta);
+            
+            // Recalculamos comisiones, guardamos en memoria y refrescamos la pantalla
+            calcularGanancias();
+            guardarEnAlmacen();
+            actualizarPantalla();
 
-            if (checkCredito.checked) {
-                estado = "Pendiente";
-                deuda = "$" + parseFloat(inputMonto.value).toFixed(2);
-                claseEstado = "estado-pendiente";
-                botonAccion = `<button onclick="marcarComoPagado(this)">Pagar</button>`;
-            }
-
-            // Buscamos el cuerpo de la tabla de clientes
-            const cuerpoTabla = document.querySelector("#tabla-clientes tbody");
-
-            // Creamos la nueva fila
-            const nuevaFila = document.createElement("tr");
-            nuevaFila.innerHTML = `
-                <td>
-                    ${inputCliente.value}
-                    <span class="vendedor-subtexto">Vendido por: ${vendedorActual}</span>
-                </td>
-                <td class="${claseEstado}">${estado}</td>
-                <td>${deuda}</td>
-                <td>${botonAccion}</td>
-            `;
-
-            // La metemos en la tabla
-            cuerpoTabla.appendChild(nuevaFila);
-
-            // Limpiamos los campos
+            // Limpiar formulario
             inputCliente.value = "";
             inputMonto.value = "";
             checkCredito.checked = false;
 
-            alert("¡Venta registrada con éxito!");
+            alert("¡Venta registrada y comisión sumada!");
         }
 
-        function marcarComoPagado(boton) {
-            const fila = boton.closest("tr");
-            const celdaEstado = fila.cells[1];
-            const celdaDeuda = fila.cells[2];
-            const celdaAccion = fila.cells[3];
-
-            celdaEstado.textContent = "Pagado";
-            celdaEstado.className = "estado-pagado";
-            celdaDeuda.textContent = "$0.00";
-            celdaAccion.textContent = "Ninguna";
+        function pagarCredito(idVenta) {
+            const venta = BD.ventas.find(v => v.id === idVenta);
+            if (venta) {
+                venta.pagado = true;
+                guardarEnAlmacen();
+                actualizarPantalla();
+                alert("¡Crédito pagado con éxito!");
+            }
         }
 
-        function cerrarSesion() { alert("Simulación de salida"); }
-        function agregarTrabajador() { alert("Función para agregar trabajador"); }
+        function reiniciarTodo() {
+            if (confirm("¿Quieres borrar las ventas nuevas y reiniciar el sistema?")) {
+                localStorage.removeItem("sistema_ventas_bd");
+                BD = { ...datosIniciales };
+                // Forzar clonación profunda simple para evitar referencias
+                BD.ventas = [
+                    { id: 1, cliente: "Carlos Lopez", monto: 100, vendedorId: "admin", vendedorNom: "Carlos (Dueño)", credito: false, pagado: true },
+                    { id: 2, cliente: "Ruiz de la hermosa", monto: 150, vendedorId: "admin", sellerNom: "Carlos (Dueño)", credito: false, pagado: true }
+                ];
+                BD.comisiones = {
+                    "v1": { nombre: "Vendedor 1", porcentaje: 0.10, totalVendido: 0, ganancia: 0 },
+                    "v2": { nombre: "luis calvo", porcentaje: 0.05, totalVendido: 0, ganancia: 0 },
+                    "v3": { nombre: "luisa Suárez", porcentaje: 0.08, totalVendido: 0, ganancia: 0 }
+                };
+                calcularGanancias();
+                guardarEnAlmacen();
+                actualizarPantalla();
+            }
+        }
     </script>
-
 </body>
 </html>
