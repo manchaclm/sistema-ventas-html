@@ -104,3 +104,35 @@ function cobrarDeuda(id) {
     actualizarTablas();
     alert("¡Deuda pagada!");
 }
+// Función para que el dueño agregue nuevos vendedores
+function agregarTrabajador() {
+    const nombre = prompt("Ingrese el nombre del nuevo trabajador:");
+    
+    // Si el usuario cancela o deja vacío, no hace nada
+    if (!nombre) return; 
+
+    const comision = parseFloat(prompt(`Ingrese el % de comisión para ${nombre} (Solo el número):`));
+
+    // Validar que la comisión sea un número real
+    if (isNaN(comision) || comision < 0) {
+        alert("Por favor, ingrese un porcentaje de comisión válido.");
+        return;
+    }
+
+    // Crear el nuevo objeto trabajador
+    const nuevoTrabajador = {
+        id: Date.now(),
+        nombre: nombre,
+        comisionPorcentaje: comision,
+        totalVentas: 0,
+        ganancias: 0
+    };
+
+    // Empujar el trabajador a la lista global y guardarlo en el almacenamiento del navegador
+    trabajadores.push(nuevoTrabajador);
+    localStorage.setItem('trabajadores', JSON.stringify(trabajadores));
+
+    // Refrescar las tablas automáticamente en la pantalla
+    actualizarTablas();
+    alert(`¡${nombre} ha sido agregado con éxito!`);
+}
