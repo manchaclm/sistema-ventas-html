@@ -169,26 +169,79 @@
 
 
     <script>
-        // Función principal para ocultar o mostrar el panel según el usuario
+            <script>
+        // 1. Función para ocultar o mostrar el panel según el usuario
         function cambiarUsuarioSimulado() {
             const selector = document.getElementById("selector-vendedor");
             const seccionAdmin = document.getElementById("seccion-administrador");
-            
             const usuarioSeleccionado = selector.value;
 
-            // Si es diferente de "admin" (es decir, es un vendedor), ocultamos la sección
             if (usuarioSeleccionado !== "admin") {
                 seccionAdmin.style.display = "none";
             } else {
-                // Si vuelve a ser "admin", la volvemos a mostrar
                 seccionAdmin.style.display = "block";
             }
         }
 
-        // Funciones temporales para evitar errores al hacer clic en los botones
-        function cerrarSesion() { alert("Sesión cerrada"); }
-        function agregarTrabajador() { alert("Función para agregar trabajador"); }
-        function guardarVenta() { alert("Venta registrada"); }
+        // 2. FUNCIÓN NUEVA: Para agregar la venta a la tabla dinámicamente
+        function guardarVenta() {
+            // Capturamos lo que el usuario escribió en las casillas
+            const inputCliente = document.getElementById("nombre-cliente");
+            const inputMonto = document.getElementById("monto-total");
+            const checkCredito = document.getElementById("es-credito");
+            const selectorVendedor = document.getElementById("selector-vendedor");
+
+            // Validar que no dejen los campos vacíos
+            if (inputCliente.value.trim() === "" || inputMonto.value.trim() === "") {
+                alert("Por favor, completa el nombre del cliente y el monto.");
+                return;
+            }
+
+            // Obtener el texto del vendedor actual que está usando el sistema
+            const vendedorActual = selectorVendedor.options[selectorVendedor.selectedIndex].text;
+
+            // Determinar el estado y la deuda según el checkbox de crédito
+            let estado = "Pagado";
+            let deuda = "$0.00";
+            let claseEstado = "estado-pagado";
+
+            if (checkCredito.checked) {
+                estado = "Pendiente";
+                deuda = "$" + parseFloat(inputMonto.value).toFixed(2);
+                claseEstado = ""; // Sin color verde porque es deuda
+            }
+
+            // Buscar la tabla de deudores en el HTML para meter la nueva fila
+            const tablaDeudores = document.querySelector("table:last-of-type tbody");
+
+            // Crear la nueva fila con los datos recolectados
+            const nuevaFila = document.createElement("tr");
+            nuevaFila.innerHTML = `
+                <td>
+                    ${inputCliente.value}
+                    <span class="vendedor-subtexto">Vendido por: ${vendedorActual}</span>
+                </td>
+                <td class="${claseEstado}">${estado}</td>
+                <td>${deuda}</td>
+                <td>${checkCredito.checked ? '<button onclick="alert(\'Funcionalidad de pago próximamente\')">Pagar</button>' : 'Ninguna'}</td>
+            `;
+
+            // Agregar la fila al final de la tabla
+            tablaDeudores.appendChild(nuevaFila);
+
+            // Limpiar las casillas del formulario para la siguiente venta
+            inputCliente.value = "";
+            inputMonto.value = "";
+            checkCredito.checked = false;
+
+            alert("¡Venta agregada con éxito!");
+        }
+
+        // Funciones de apoyo adicionales
+        function cerrarSesion() { alert("Simulación de salida"); }
+        function agregarTrabajador() { alert("Aquí podrás añadir trabajadores más adelante"); }
+    </script>
+
     </script>
 
 </body>
