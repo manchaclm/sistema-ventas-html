@@ -48,7 +48,7 @@
         <button class="btn-primary" onclick="agregarTrabajador()"> + Agregar Trabajador</button>
 
                 <ul id="lista-trabajadores"></ul>
-                </div>
+         </div>
 
             </div>
         </section>
@@ -86,25 +86,22 @@
 
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
-    document.addEventListener("DOMContentLoaded", function () {
-    // 1. Referenciamos los elementos del HTML
-    const selectorUsuario = document.getElementById("selector-usuario");
+    function cambiarUsuarioSimulado() {
+    // 1. Buscamos el menú y la sección del dueño
+    const selector = document.getElementById("selector-vendedor");
     const seccionAdmin = document.getElementById("seccion-administrador");
+    
+    // 2. Obtenemos el usuario que seleccionaste
+    const usuarioSeleccionado = selector.value;
 
-    // 2. Escuchamos cuando el usuario cambia la opción en el menú
-    selectorUsuario.addEventListener("change", function () {
-        const usuarioSeleccionado = selectorUsuario.value;
+    // 3. Si el usuario NO es el administrador ("admin"), ocultamos el panel
+    if (usuarioSeleccionado !== "admin") {
+        seccionAdmin.style.display = "none";  // Oculta el panel del dueño
+    } else {
+        seccionAdmin.style.display = "block"; // Lo muestra si vuelve a Carlos
+    }
+}
 
-        // 3. Aplicamos la lógica de visibilidad
-        if (usuarioSeleccionado === "vendedor") {
-            // Si es vendedor, ocultamos el panel del dueño
-            seccionAdmin.style.display = "none";
-        } else {
-            // Si vuelve a seleccionar al dueño/administrador, lo mostramos
-            seccionAdmin.style.display = "block";
-        }
-    });
-});
 
 </body>
 </html>
