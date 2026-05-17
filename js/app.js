@@ -66,14 +66,29 @@ function cambiarUsuarioSimulado() {
         usuarioActivo = { nombre: "Carlos (Dueño)", rol: "admin", comision: 0 };
     } else {
         // Buscar al vendedor seleccionado en la lista de trabajadores
+        // FUNCIÓN PARA CAMBIAR ENTRE DUEÑO Y VENDEDORES
+function cambiarUsuarioSimulado() {
+    const selector = document.getElementById("selector-vendedor");
+    const valorSeleccionado = selector.value;
+
+    if (valorSeleccionado === "admin") {
+        usuarioActivo = { nombre: "Carlos (Dueño)", rol: "admin", comision: 0 };
+    } else {
+        // Buscar al vendedor seleccionado en la lista de trabajadores
         const vendedorEncontrado = trabajadores.find(t => t.id == valorSeleccionado);
         if (vendedorEncontrado) {
             usuarioActivo = { 
-                nombre: sellerEncontrado = vendedorEncontrado.nombre, 
+                nombre: vendedorEncontrado.nombre, 
                 rol: "vendedor", 
                 comision: vendedorEncontrado.comisionPorcentaje 
             };
         }
+    }
+    
+    // Ocultar o mostrar herramientas según el rol seleccionado
+    controlarVistasPorRol();
+}
+
     }
     
     // Ocultar o mostrar herramientas según el rol seleccionado
