@@ -10,10 +10,14 @@
 
     <header>
         <h1>Mi Sistema de Ventas</h1>
-        <div id="user-info">
-            <span id="txt-usuario">Cargando usuario...</span>
-            <button onclick="cerrarSesion()">Cerrar Sesión</button>
+                <div id="user-info">
+            <label style="color:white; display:inline; margin-right:10px;">Simular Usuario:</label>
+            <select id="selector-vendedor" onchange="cambiarUsuarioSimulado()">
+                <option value="admin">Carlos (Dueño) - ADMIN</option>
+                </select>
+            <button onclick="cerrarSesion()" style="margin-left:10px;">Salir</button>
         </div>
+
     </header>
 
     <main class="container">
