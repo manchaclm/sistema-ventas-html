@@ -3,109 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión de Ventas</title>
-    <link rel="stylesheet" href="CSS/styles.css">
+    <title>Mi Sistema de Ventas</title>
+    <style>
+        /* Estilos base para mantener tu diseño limpio */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 10px;
+            background-color: #ffffff;
+        }
+        h1, h2, h3 {
+            color: #000000;
+        }
+        #user-info {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .ganancia-verde, .estado-pagado {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"], select {
+            padding: 8px;
+            margin: 5px 0;
+            width: 100%;
+            max-width: 300px;
+            display: block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        button:hover {
+            background-color: #e0e0e0;
+        }
+        .vendedor-info {
+            color: #777;
+            font-size: 0.85em;
+            display: block;
+        }
+    </style>
 </head>
 <body>
 
-    <header>
-        <h1>Mi Sistema de Ventas</h1>
-                <div id="user-info">
-            <label style="color:white; display:inline; margin-right:10px;">Simular Usuario:</label>
-            <select id="selector-vendedor" onchange="cambiarUsuarioSimulado()">
-                <option value="admin">Carlos (Dueño) - ADMIN</option>
-                </select>
-            <button onclick="cerrarSesion()" style="margin-left:10px;">Salir</button>
-        </div>
-
-    </header>
-
-    <main class="container">
-        
-        <section id="seccion-admin" class="panel-control hidden">
-    <div id="seccion-administrador">
-    <h2>Panel de Control (Dueño)</h2>
+    <h1>Mi Sistema de Ventas</h1>
+    
+    <div id="user-info">
+        <label style="color: black; display: inline;">Simular Usuario:</label>
+        <select id="selector-vendedor" onchange="cambiarUsuarioSimulado()">
+            <option value="admin">Carlos (Dueño) - ADMIN</option>
+            <option value="vendedor">Vendedor 1 (Vendedor)</option>
+            <option value="vendedor">luis calvo (Vendedor)</option>
+            <option value="vendedor">luisa Suárez (Vendedor)</option>
+        </select>
+        <button onclick="cerrarSesion()">Salir</button>
     </div>
 
-            <hr>
-            
-            <div class="card">
-                <h3>Porcentaje de Ganancias por Trabajador</h3>
-                <table id="tabla-comisiones">
-                    <thead>
-                        <tr>
-                            <th>Trabajador</th>
-                            <th>Total Ventas</th>
-                            <th>% Comisión</th>
-                            <th>Ganancia Acumulada</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
+    <hr>
 
-            <div class="card">
-                <h3>Lista de Trabajadores</h3>
-        <button class="btn-primary" onclick="agregarTrabajador()"> + Agregar Trabajador</button>
+    <div id="seccion-administrador">
+        <h2>Panel de Control (Dueño)</h2>
+        
+        <h3>Porcentaje de Ganancias por Trabajador</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Trabajador</th>
+                    <th>Total Ventas</th>
+                    <th>% Comisión</th>
+                    <th>Ganancia Acumulada</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><b>Vendedor 1</b></td>
+                    <td>$0.00</td>
+                    <td>10%</td>
+                    <td class="ganancia-verde">$0.00</td>
+                </tr>
+                <tr>
+                    <td><b>luis calvo</b></td>
+                    <td>$0.00</td>
+                    <td>5%</td>
+                    <td class="ganancia-verde">$0.00</td>
+                </tr>
+                <tr>
+                    <td><b>luisa Suárez</b></td>
+                    <td>$0.00</td>
+                    <td>8%</td>
+                    <td class="ganancia-verde">$0.00</td>
+                </tr>
+            </tbody>
+        </table>
 
-                <ul id="lista-trabajadores"></ul>
-         </div>
+        <h3>Lista de Trabajadores</h3>
+        <button onclick="agregarTrabajador()">+ Agregar Trabajador</button>
+        <ul>
+            <li>Vendedor 1 - (10% Comisión)</li>
+            <li>luis calvo - (5% Comisión)</li>
+            <li>luisa Suárez - (8% Comisión)</li>
+        </ul>
+        <hr>
+    </div>
+    <h2>Registrar Nueva Venta</h2>
+    <form onsubmit="event.preventDefault(); guardarVenta();">
+        <input type="text" id="nombre-cliente" placeholder="Nombre del Cliente">
+        <input type="number" id="monto-total" placeholder="Monto total ($)">
+        <label>
+            <input type="checkbox" id="es-credito"> ¿Es venta a crédito?
+        </label>
+        <button type="submit">Guardar Venta</button>
+    </form>
 
-            </div>
-        </section>
+    <h2>Control de Clientes y Deudores</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Estado</th>
+                <th>Deuda ($)</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    Carlos Lopez
+                    <span class="vendedor-info">Vendido por: Carlos (Dueño)</span>
+                </td>
+                <td class="estado-pagado">Pagado</td>
+                <td>$0.00</td>
+                <td>Ninguna</td>
+            </tr>
+            <tr>
+                <td>
+                    Ruiz de la hermosa
+                    <span class="vendedor-info">Vendido por: Carlos (Dueño)</span>
+                </td>
+                <td class="estado-pagado">Pagado</td>
+                <td>$0.00</td>
+                <td>Ninguna</td>
+            </tr>
+        </tbody>
+    </table>
 
-        <section id="seccion-general">
-            <div class="card">
-                <h2>Registrar Nueva Venta</h2>
-                <form id="form-venta">
-                    <input type="text" placeholder="Nombre del Cliente" required>
-                    <input type="number" placeholder="Monto total ($)" required>
-                    <label>
-                        <input type="checkbox" id="es-deudor"> ¿Es venta a crédito?
-                    </label>
-                    <button type="submit" class="btn-success">Guardar Venta</button>
-                </form>
-            </div>
 
-            <div class="card">
-                <h2>Control de Clientes y Deudores</h2>
-                <table id="tabla-clientes">
-                    <thead>
-                        <tr>
-                            <th>Cliente</th>
-                            <th>Estado</th>
-                            <th>Deuda ($)</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </section>
-
-    </main>
-
-    <script src="js/auth.js"></script>
-    <script src="js/app.js"></script>
     <script>
-function cambiarUsuarioSimulado() {
-    // 1. Buscamos el menú y la sección del dueño
-    const selector = document.getElementById("selector-vendedor");
-    const seccionAdmin = document.getElementById("seccion-administrador");
-    
-    // 2. Obtenemos el usuario que seleccionaste
-    const usuarioSeleccionado = selector.value;
+        // Función principal para ocultar o mostrar el panel según el usuario
+        function cambiarUsuarioSimulado() {
+            const selector = document.getElementById("selector-vendedor");
+            const seccionAdmin = document.getElementById("seccion-administrador");
+            
+            const usuarioSeleccionado = selector.value;
 
-    // 3. Si el usuario NO es el administrador ("admin"), ocultamos el panel
-    if (usuarioSeleccionado !== "admin") {
-        seccionAdmin.style.display = "none";  // Oculta el panel del dueño
-    } else {
-        seccionAdmin.style.display = "block"; // Lo muestra si vuelve a Carlos
-    }
-}
-</script>
+            // Si es diferente de "admin" (es decir, es un vendedor), ocultamos la sección
+            if (usuarioSeleccionado !== "admin") {
+                seccionAdmin.style.display = "none";
+            } else {
+                // Si vuelve a ser "admin", la volvemos a mostrar
+                seccionAdmin.style.display = "block";
+            }
+        }
 
-
+        // Funciones temporales para evitar errores al hacer clic en los botones
+        function cerrarSesion() { alert("Sesión cerrada"); }
+        function agregarTrabajador() { alert("Función para agregar trabajador"); }
+        function guardarVenta() { alert("Venta registrada"); }
+    </script>
 
 </body>
 </html>
