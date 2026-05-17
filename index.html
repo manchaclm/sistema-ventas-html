@@ -5,36 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Sistema de Ventas</title>
     <style>
-        /* Estilos base para mantener tu diseño limpio */
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 10px;
+            margin: 15px;
+            padding: 5px;
             background-color: #ffffff;
         }
         h1, h2, h3 {
             color: #000000;
+            margin-top: 20px;
         }
         #user-info {
             display: flex;
             justify-content: flex-end;
             align-items: center;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
-            margin-bottom: 20px;
+            margin-top: 10px;
+            margin-bottom: 15px;
         }
         th, td {
             padding: 10px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #dddddd;
+        }
+        th {
+            background-color: #f9f9f9;
         }
         .ganancia-verde, .estado-pagado {
             color: #27ae60;
+            font-weight: bold;
+        }
+        .estado-pendiente {
+            color: #e67e22;
             font-weight: bold;
         }
         input[type="text"], input[type="number"], select {
@@ -45,6 +52,7 @@
             display: block;
             border: 1px solid #ccc;
             border-radius: 4px;
+            box-sizing: border-box;
         }
         button {
             padding: 8px 15px;
@@ -54,11 +62,8 @@
             border-radius: 4px;
             margin-top: 5px;
         }
-        button:hover {
-            background-color: #e0e0e0;
-        }
-        .vendedor-info {
-            color: #777;
+        .vendedor-subtexto {
+            color: #777777;
             font-size: 0.85em;
             display: block;
         }
@@ -129,14 +134,15 @@
     <form onsubmit="event.preventDefault(); guardarVenta();">
         <input type="text" id="nombre-cliente" placeholder="Nombre del Cliente">
         <input type="number" id="monto-total" placeholder="Monto total ($)">
-        <label>
+        <label style="display: flex; align-items: center; gap: 5px; margin: 10px 0;">
             <input type="checkbox" id="es-credito"> ¿Es venta a crédito?
         </label>
         <button type="submit">Guardar Venta</button>
     </form>
 
+
     <h2>Control de Clientes y Deudores</h2>
-    <table>
+    <table id="tabla-clientes">
         <thead>
             <tr>
                 <th>Cliente</th>
@@ -149,7 +155,7 @@
             <tr>
                 <td>
                     Carlos Lopez
-                    <span class="vendedor-info">Vendido por: Carlos (Dueño)</span>
+                    <span class="vendedor-subtexto">Vendido por: Carlos (Dueño) - ADMIN</span>
                 </td>
                 <td class="estado-pagado">Pagado</td>
                 <td>$0.00</td>
@@ -158,7 +164,7 @@
             <tr>
                 <td>
                     Ruiz de la hermosa
-                    <span class="vendedor-info">Vendido por: Carlos (Dueño)</span>
+                    <span class="vendedor-subtexto">Vendido por: Carlos (Dueño) - ADMIN</span>
                 </td>
                 <td class="estado-pagado">Pagado</td>
                 <td>$0.00</td>
@@ -169,52 +175,48 @@
 
 
     <script>
-            <script>
-        // 1. Función para ocultar o mostrar el panel según el usuario
+        // Ocultar o mostrar el panel del dueño
         function cambiarUsuarioSimulado() {
             const selector = document.getElementById("selector-vendedor");
             const seccionAdmin = document.getElementById("seccion-administrador");
-            const usuarioSeleccionado = selector.value;
-
-            if (usuarioSeleccionado !== "admin") {
+            
+            if (selector.value !== "admin") {
                 seccionAdmin.style.display = "none";
             } else {
                 seccionAdmin.style.display = "block";
             }
         }
 
-        // 2. FUNCIÓN NUEVA: Para agregar la venta a la tabla dinámicamente
+        // Registrar la venta de verdad en la tabla
         function guardarVenta() {
-            // Capturamos lo que el usuario escribió en las casillas
             const inputCliente = document.getElementById("nombre-cliente");
             const inputMonto = document.getElementById("monto-total");
             const checkCredito = document.getElementById("es-credito");
             const selectorVendedor = document.getElementById("selector-vendedor");
 
-            // Validar que no dejen los campos vacíos
             if (inputCliente.value.trim() === "" || inputMonto.value.trim() === "") {
                 alert("Por favor, completa el nombre del cliente y el monto.");
                 return;
             }
 
-            // Obtener el texto del vendedor actual que está usando el sistema
             const vendedorActual = selectorVendedor.options[selectorVendedor.selectedIndex].text;
 
-            // Determinar el estado y la deuda según el checkbox de crédito
             let estado = "Pagado";
             let deuda = "$0.00";
             let claseEstado = "estado-pagado";
+            let botonAccion = "Ninguna";
 
             if (checkCredito.checked) {
                 estado = "Pendiente";
                 deuda = "$" + parseFloat(inputMonto.value).toFixed(2);
-                claseEstado = ""; // Sin color verde porque es deuda
+                claseEstado = "estado-pendiente";
+                botonAccion = `<button onclick="marcarComoPagado(this)">Pagar</button>`;
             }
 
-            // Buscar la tabla de deudores en el HTML para meter la nueva fila
-            const tablaDeudores = document.querySelector("table:last-of-type tbody");
+            // Buscamos el cuerpo de la tabla de clientes
+            const cuerpoTabla = document.querySelector("#tabla-clientes tbody");
 
-            // Crear la nueva fila con los datos recolectados
+            // Creamos la nueva fila
             const nuevaFila = document.createElement("tr");
             nuevaFila.innerHTML = `
                 <td>
@@ -223,25 +225,34 @@
                 </td>
                 <td class="${claseEstado}">${estado}</td>
                 <td>${deuda}</td>
-                <td>${checkCredito.checked ? '<button onclick="alert(\'Funcionalidad de pago próximamente\')">Pagar</button>' : 'Ninguna'}</td>
+                <td>${botonAccion}</td>
             `;
 
-            // Agregar la fila al final de la tabla
-            tablaDeudores.appendChild(nuevaFila);
+            // La metemos en la tabla
+            cuerpoTabla.appendChild(nuevaFila);
 
-            // Limpiar las casillas del formulario para la siguiente venta
+            // Limpiamos los campos
             inputCliente.value = "";
             inputMonto.value = "";
             checkCredito.checked = false;
 
-            alert("¡Venta agregada con éxito!");
+            alert("¡Venta registrada con éxito!");
         }
 
-        // Funciones de apoyo adicionales
-        function cerrarSesion() { alert("Simulación de salida"); }
-        function agregarTrabajador() { alert("Aquí podrás añadir trabajadores más adelante"); }
-    </script>
+        function marcarComoPagado(boton) {
+            const fila = boton.closest("tr");
+            const celdaEstado = fila.cells[1];
+            const celdaDeuda = fila.cells[2];
+            const celdaAccion = fila.cells[3];
 
+            celdaEstado.textContent = "Pagado";
+            celdaEstado.className = "estado-pagado";
+            celdaDeuda.textContent = "$0.00";
+            celdaAccion.textContent = "Ninguna";
+        }
+
+        function cerrarSesion() { alert("Simulación de salida"); }
+        function agregarTrabajador() { alert("Función para agregar trabajador"); }
     </script>
 
 </body>
