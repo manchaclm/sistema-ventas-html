@@ -77,7 +77,7 @@
         <label style="color: black; display: inline;">Simular Usuario:</label>
         <select id="selector-vendedor" onchange="cambiarUsuarioSimulado()">
             <option value="admin">Carlos (Dueño) - ADMIN</option>
-            </select>
+        </select>
         <button onclick="reiniciarTodo()">Reset Datos</button>
     </div>
 
@@ -96,13 +96,13 @@
                 </tr>
             </thead>
             <tbody id="tabla-comisiones">
-                </tbody>
+            </tbody>
         </table>
 
         <h3>Lista de Trabajadores</h3>
         <button onclick="agregarTrabajador()">+ Agregar Trabajador</button>
         <ul id="lista-trabajadores-texto">
-            </ul>
+        </ul>
         <hr>
     </div>
 
@@ -127,11 +127,13 @@
             </tr>
         </thead>
         <tbody>
-            </tbody>
+        </tbody>
     </table>
 
-    <script>
-        // Estructura base del negocio
+    <script type="module">
+        import { db, collection, addDoc, getDocs, doc, setDoc } from "./firebase-config.js";
+
+        // Estructura de respaldo por si la base de datos inicia en blanco
         const datosIniciales = {
             ventas: [
                 { id: 1, cliente: "Carlos Lopez", monto: 100, vendedorId: "admin", vendedorNom: "Carlos (Dueño) - ADMIN", credito: false, pagado: true },
@@ -144,18 +146,50 @@
             }
         };
 
-        let BD = JSON.parse(localStorage.getItem("sistema_ventas_bd")) || datosIniciales;
+        let BD = { ventas: [], comisiones: {} };
 
-        function guardarEnAlmacen() {
-            localStorage.setItem("sistema_ventas_bd", JSON.stringify(BD));
+        // 1. Descargar datos de la nube al abrir la app
+        async function cargarDatosDeLaNube() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "sistema_ventas_bd"));
+                let existeGlobal = false;
+
+                querySnapshot.forEach((doc) => {
+                    if (doc.id === "global") {
+                        BD = doc.data();
+                        existeGlobal = true;
+                    }
+                });
+
+                if (!existeGlobal) {
+                    BD = datosIniciales;
+                    await setDoc(doc(db, "sistema_ventas_bd", "global"), BD);
+                }
+
+                calcularGanancias();
+                actualizarPantalla(true);
+            } catch (error) {
+                console.error("Error al conectar con Firebase:", error);
+                alert("Hubo un problema de conexión al cargar la información desde internet.");
+            }
         }
 
+        // 2. Subir datos actualizados a la nube
+        async function guardarEnAlmacen() {
+            try {
+                await setDoc(doc(db, "sistema_ventas_bd", "global"), BD);
+            } catch (error) {
+                console.error("Error al subir cambios a Firebase:", error);
+            }
+        }
+
+        // Arrancar la app descargando los datos de internet
         document.addEventListener("DOMContentLoaded", () => {
-            calcularGanancias();
-            actualizarPantalla(true); // Pasamos true para reconstruir el menú desplegable al iniciar
+            cargarDatosDeLaNube();
         });
 
-        function cambiarUsuarioSimulado() {
+        // Vincular funciones globales al objeto 'window' para que los botones HTML sigan funcionando
+        window.cambiarUsuarioSimulado = function() {
             const selector = document.getElementById("selector-vendedor");
             const seccionAdmin = document.getElementById("seccion-administrador");
             
@@ -165,17 +199,15 @@
                 seccionAdmin.style.display = "block";
             }
             
-            actualizarPantalla(false); // Solo actualiza las tablas sin reiniciar el menú en el que estás parado
-        }
+            actualizarPantalla(false);
+        };
 
         function calcularGanancias() {
-            // Limpiar contadores
             for (let v in BD.comisiones) {
                 BD.comisiones[v].totalVendido = 0;
                 BD.comisiones[v].ganancia = 0;
             }
 
-            // Sumar comisiones
             BD.ventas.forEach(venta => {
                 if (BD.comisiones[venta.vendedorId]) {
                     BD.comisiones[venta.vendedorId].totalVendido += venta.monto;
@@ -185,8 +217,7 @@
             });
         }
 
-        // NUEVA FUNCIÓN DINÁMICA: Agrega el trabajador a la estructura global
-        function agregarTrabajador() {
+        window.agregarTrabajador = async function() {
             const nombre = prompt("Introduce el nombre del nuevo trabajador:");
             if (!nombre || nombre.trim() === "") return;
 
@@ -198,40 +229,36 @@
                 return;
             }
 
-            // Generar una clave única para el nuevo vendedor (ejemplo: v1715423...)
             const nuevoId = "v" + Date.now();
 
-            // Guardar en la base de datos local
             BD.comisiones[nuevoId] = {
                 nombre: nombre.trim(),
-                porcentaje: porcentajeNum / 100, // Lo convertimos a decimal para las operaciones matemáticas
+                porcentaje: porcentajeNum / 100,
                 totalVendido: 0,
                 ganancia: 0
             };
 
-            guardarEnAlmacen();
             calcularGanancias();
-            actualizarPantalla(true); // Reconstruimos las tablas y el menú desplegable
+            actualizarPantalla(true);
+            await guardarEnAlmacen();
 
-            alert(`¡Trabajador ${nombre} agregado con éxito!`);
-        }
+            alert(`¡Trabajador ${nombre} agregado con éxito y respaldado en la nube!`);
+        };
 
         function actualizarPantalla(reconstruirMenu = false) {
             const selector = document.getElementById("selector-vendedor");
             const usuarioActualId = selector.value;
             const usuarioActualTexto = selector.options[selector.selectedIndex] ? selector.options[selector.selectedIndex].text : "Carlos (Dueño) - ADMIN";
 
-            // 1. Reconstruir el Selector de Usuarios (Si se añade un empleado nuevo o se resetea)
             if (reconstruirMenu) {
                 const valorGuardado = selector.value || "admin";
                 selector.innerHTML = `<option value="admin">Carlos (Dueño) - ADMIN</option>`;
                 for (let key in BD.comisiones) {
                     selector.innerHTML += `<option value="${key}">${BD.comisiones[key].nombre} (Vendedor)</option>`;
                 }
-                selector.value = valorGuardado; // Mantiene el usuario seleccionado en el que estabas
+                selector.value = valorGuardado;
             }
 
-            // 2. Renderizar Tabla de Comisiones e Historial de Texto
             const tbodyComisiones = document.getElementById("tabla-comisiones");
             const listaTexto = document.getElementById("lista-trabajadores-texto");
             
@@ -251,7 +278,6 @@
                 listaTexto.innerHTML += `<li>${v.nombre} - (${(v.porcentaje * 100).toFixed(0)}% Comisión)</li>`;
             }
 
-            // 3. Renderizar Tabla de Clientes Filtrada
             const tbodyClientes = document.querySelector("#tabla-clientes tbody");
             tbodyClientes.innerHTML = "";
             
@@ -284,7 +310,7 @@
             });
         }
 
-        function guardarVenta() {
+        window.guardarVenta = async function() {
             const inputCliente = document.getElementById("nombre-cliente");
             const inputMonto = document.getElementById("monto-total");
             const checkCredito = document.getElementById("es-credito");
@@ -310,34 +336,35 @@
             BD.ventas.push(nuevaVenta);
             
             calcularGanancias();
-            guardarEnAlmacen();
             actualizarPantalla(false);
+            await guardarEnAlmacen();
 
             inputCliente.value = "";
             inputMonto.value = "";
             checkCredito.checked = false;
 
-            alert("¡Venta registrada y comisión sumada!");
-        }
+            alert("¡Venta guardada exitosamente en la nube!");
+        };
 
-        function pagarCredito(idVenta) {
+        window.pagarCredito = async function(idVenta) {
             const venta = BD.ventas.find(v => v.id === idVenta);
             if (venta) {
                 venta.pagado = true;
-                guardarEnAlmacen();
                 actualizarPantalla(false);
-                alert("¡Crédito pagado con éxito!");
+                await guardarEnAlmacen();
+                alert("¡Crédito pagado y sincronizado en internet!");
             }
-        }
+        };
 
-        function reiniciarTodo() {
-            if (confirm("¿Quieres borrar absolutamente todo y reiniciar el sistema de fábrica?")) {
-                localStorage.removeItem("sistema_ventas_bd");
+        window.reiniciarTodo = async function() {
+            if (confirm("¿Quieres borrar absolutamente todos los datos guardados en la nube y reiniciar de fábrica?")) {
                 BD = JSON.parse(JSON.stringify(datosIniciales)); 
                 calcularGanancias();
                 actualizarPantalla(true);
+                await guardarEnAlmacen();
+                alert("Base de datos en la nube restablecida.");
             }
-        }
+        };
     </script>
 </body>
 </html>
